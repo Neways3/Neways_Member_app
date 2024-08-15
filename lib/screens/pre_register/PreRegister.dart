@@ -25,7 +25,8 @@ class _PreRegisterState extends State<PreRegister> {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
         statusBarColor: Colors.white.withOpacity(0.0),
         statusBarIconBrightness: Brightness.dark));
-    Get.put(PreRegisterController()).getBranch();
+    // Get.put(PreRegisterController()).getBranch();
+    // Get.put(PreRegisterController()).howtoFindUsFun();
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -38,8 +39,10 @@ class _PreRegisterState extends State<PreRegister> {
           padding: const EdgeInsets.all(defaultPadding / 2),
           child: GetBuilder<PreRegisterController>(
               init: PreRegisterController(),
+              initState: (d){
+                d.controller?.howtoFindUsFun();
+              },
               builder: (controller) {
-                var labelText;
                 return ListView(
                   physics: const BouncingScrollPhysics(),
                   children: [
@@ -272,7 +275,7 @@ class _PreRegisterState extends State<PreRegister> {
                     const SizedBox(height: defaultPadding / 1.5),
 
                     Visibility(
-                      visible: controller.isValidPhone,
+                      visible: controller.isValidPhone.value,
                       child: CustomeTextField(
                         controller: controller.otpController,
                         labelText: "OTP",
@@ -424,7 +427,7 @@ class _PreRegisterState extends State<PreRegister> {
                     ///            jkhjkh   ///////////////////////////////////////////
 
                     SelectCategory(
-                      categoryNameReq: 'How to find Us',
+                      categoryNameReq: 'How to know about us',
                       statusList: controller.findUsList,
                       selectedValue: controller.findUs,
                       onSelected: (s) {

@@ -17,6 +17,7 @@ import '../../profile/ProfileScreen.dart';
 import '../../profile/phone_contact_service.dart';
 import '../../request/services/firestore_api_service.dart';
 import '../../widgets/utils.dart';
+import '../model/howto_find_us_model.dart';
 
 class PreRegisterController extends GetxController {
   final AuthController _authController = AuthController();
@@ -27,7 +28,7 @@ class PreRegisterController extends GetxController {
   List maritalStatusList = ["Select Status", "Single", "Married"];
   String bloodGroup = "Select Group";
   bool isAgree = false; static const getItem = "GET ITEM";
-  bool isValidPhone = false; bool isValidEmail = false;
+  var isValidPhone = false.obs; bool isValidEmail = false;
   bool isValidNid = false; bool isEmailSend = false;
   bool isReadyToSendOtp = false; bool isSendOtp = false;
   bool isValidOtp = false; int? otp;List statusList = [" "];
@@ -35,8 +36,9 @@ class PreRegisterController extends GetxController {
 
   @override
   void onInit() async {
-    super.onInit();
     await getBranch();
+    howtoFindUsFun();
+    super.onInit();
   }
 
   // image upload ...
@@ -102,19 +104,10 @@ class PreRegisterController extends GetxController {
   // TextEditingController passportNo = TextEditingController();
   String findUs = "Select Option";
   List findUsList = [
-    "Select Option",
-    "News Paper",
-    "Google",
-    "Facebook",
-    "SMS",
-    "Youtube",
-    "Parents",
-    "TVC",
-    "Friends",
-    "Colleague",
-    "I don't Know",
-    "Other"
+    Datum(referenceName: "Select Option"),
   ];
+  var findUsModel = HowToFindUsModel();
+  var findUsModelDataId = 0;
   BranchResponse branch = BranchResponse(name: "Select Branch");
   List<BranchResponse> branchList = [
     BranchResponse(name: "Select Branch"),
@@ -157,6 +150,58 @@ class PreRegisterController extends GetxController {
     await EasyLoading.dismiss();
     update();
   }
+  howtoFindUsFun() async {
+    await EasyLoading.show();
+    findUsList.clear();
+    findUsList.add("Select Option");
+    await PreRegisterAPIService.howtoFindUs().then((value) {
+      print("This is preRegistration of value ${value.data[0].referenceName}");
+      if (value.runtimeType == HowToFindUsModel) {
+        findUsModel = value;
+        for(var value in value.data){
+          findUsList.add(value.referenceName);
+          print("this is value ${value.referenceName}");
+        }
+
+      } else {}
+    });
+    await EasyLoading.dismiss();
+    update();
+  }
+  // howtoFindUsFun() async {
+  //   // findUsList.clear();
+  //   await EasyLoading.show();
+  //
+  //   // Fetch the data using the API service
+  //   final value = await PreRegisterAPIService.howtoFindUs();
+  //
+  //   // Check if the value is of type HowToFindUsModel
+  //   if (value is HowToFindUsModel) {
+  //     print("This is preRegistration of value ${value.runtimeType}");
+  //
+  //     // Initialize the findUsList with a default selection option
+  //     findUsList.add("Select How to Find us");
+  //
+  //     // Add the fetched data to the findUsList
+  //     if (value.data != null) {
+  //       // for(var name in value.data!){
+  //       //   findUsList.add(name.referenceName ?? '');
+  //       // }
+  //       findUsList.addAll(value.data!);
+  //     }
+  //     update();
+  //     // Debug print to check the first item's referenceName
+  //     print("find by us value  ${findUsList}");
+  //     print("find by us value  ${bloodGroupList}");
+  //   } else {
+  //     // Handle the case where the value is not of the expected type
+  //     print("Unexpected value type: ${value.runtimeType}");
+  //   }
+  //
+  //   await EasyLoading.dismiss();
+  //   update();
+  // }
+
 
   setAgree(value) {
     isAgree = value;
@@ -211,6 +256,14 @@ class PreRegisterController extends GetxController {
 
   selectFindUs(value) {
     findUs = value;
+    print("this is value $value");
+    // print(findUsModel.data?.firstWhere((element) => element.referenceName == value).id.runtimeType);
+    if(value == "Select Option"){
+      findUsModelDataId = 0;
+    }else{
+    findUsModelDataId = findUsModel.data?.firstWhere((element) => element.referenceName == value).id ?? 0;
+    }
+    print("this is value $findUsModelDataId");
     update();
   }
 
@@ -226,6 +279,7 @@ class PreRegisterController extends GetxController {
         {'phone_number': phoneNumber.text}
     );
     EasyLoading.dismiss();
+    print("data['status'] ${data['status']}");
     if (data['status'] == true) {
       Get.snackbar('Warning', "You are already registered in this number",
           snackPosition: SnackPosition.BOTTOM,
@@ -234,7 +288,7 @@ class PreRegisterController extends GetxController {
           backgroundColor: Colors.orange.shade500);
     }
     else {
-      isValidPhone = true;
+      isValidPhone.value = true;
       otp = data['otp'];
       Get.snackbar('Success', "Otp Send Successfull",
           snackPosition: SnackPosition.BOTTOM,
@@ -320,7 +374,7 @@ class PreRegisterController extends GetxController {
         "email": email.text,
         "nid": nid.text,
         // "passport_no": passportNo.text,
-        "find_us": findUs,
+        "find_us": findUsModelDataId.toString(),
         "otp": otpController.text,
         "permanent_address": permanentAddress.text,
         "present_address": presentAddress.text,
@@ -469,14 +523,12 @@ class PreRegisterController extends GetxController {
           margin: const EdgeInsets.all(8),
           backgroundColor: Colors.red.shade500);
       return false;
-    }
-    else if (findUs == "Select Option") {
+    }else if(findUsModelDataId == 0){
       Get.snackbar('Error', "Find Us option must be required",
           snackPosition: SnackPosition.BOTTOM,
           colorText: Colors.white,
           margin: const EdgeInsets.all(8),
           backgroundColor: Colors.red.shade500);
-      return false;
     }
 
     // else if (phoneNumber.text.isEmpty) {
